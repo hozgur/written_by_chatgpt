@@ -44,9 +44,24 @@ def save_high_score(score):
 
 # Generate assets programmatically
 def create_player_image():
-    surf = pygame.Surface((40, 30), pygame.SRCALPHA)
-    pygame.draw.polygon(surf, WHITE, [(20, 0), (40, 30), (0, 30)])
-    pygame.draw.line(surf, RED, (15, 15), (25, 15), 2)
+    surf = pygame.Surface((50, 40), pygame.SRCALPHA)
+    # Main body with gradient
+    for i in range(40):
+        shade = 200 - int(i * 3)
+        pygame.draw.line(surf, (shade, shade, shade), (25, i), (25, i), 3)
+    # Wings
+    pygame.draw.polygon(surf, (180, 180, 180), [
+        (15, 25), (35, 25), 
+        (40, 35), (10, 35)
+    ])
+    # Cockpit
+    pygame.draw.circle(surf, (0, 0, 150), (25, 15), 5)
+    # Afterburner
+    for i in range(5):
+        pygame.draw.line(surf, (255, 165 - i*30, 0), 
+                        (25, 38 - i), (25, 38 - i), 2)
+    # Wing details
+    pygame.draw.line(surf, (100, 100, 100), (20, 28), (30, 28), 2)
     return surf
 
 def create_bullet_image():
@@ -75,8 +90,89 @@ def create_fuel_image():
     return surf
 
 def create_river_bank_image():
-    surf = pygame.Surface((50, 10), pygame.SRCALPHA)
-    pygame.draw.polygon(surf, DARK_GREEN, [(0, 10), (50, 10), (40, 0), (10, 0)])
+    surf = pygame.Surface((80, 25), pygame.SRCALPHA)
+    
+    # Layered soil profile
+    for y in range(25):
+        # Base layer (dark soil)
+        soil_color = (
+            30 + y*2,
+            20 + y,
+            0,
+            255 - int(y * 8)
+        )
+        pygame.draw.line(surf, soil_color, (0, y), (80, y))
+        
+        # Top layer texture (sandy soil)
+        if y < 15:
+            for x in range(0, 80, 3):
+                if random.random() < 0.3:
+                    shade = random.randint(150, 180)
+                    pygame.draw.line(surf, (shade, shade-20, 0, 200), 
+                                    (x, y), (x+2, y), 1)
+
+    # Natural vegetation clusters
+    for _ in range(8):  # Fewer clusters but more detailed
+        cluster_x = random.randint(0, 80)
+        cluster_y = random.randint(0, 15)
+        plant_type = random.choice(["reed_cluster", "bush_cluster", "mixed_vegetation"])
+        
+        if plant_type == "reed_cluster":
+            # Group of reeds in a natural pattern
+            for _ in range(random.randint(3,6)):
+                x = cluster_x + random.randint(-5,5)
+                y = cluster_y + random.randint(0,3)
+                height = random.randint(4,8)
+                for i in range(height):
+                    shade = (80 + i*2, 90 + i*3, 0, 200 - i*20)
+                    pygame.draw.line(surf, shade, (x, y-i), (x, y-i), 2)
+                pygame.draw.circle(surf, (100, 110, 0, 220), (x, y-height-1), 2)
+                
+        elif plant_type == "bush_cluster":
+            # Cluster of overlapping bushes
+            base_color = (random.randint(0,10), 
+                         random.randint(80,100), 
+                         0, 
+                         200)
+            for _ in range(random.randint(2,4)):
+                x = cluster_x + random.randint(-8,8)
+                y = cluster_y + random.randint(-2,2)
+                width = random.randint(6,10)
+                height = random.randint(4,6)
+                pygame.draw.ellipse(surf, base_color, (x, y, width, height))
+                
+        elif plant_type == "mixed_vegetation":
+            # Combination of grasses and small plants
+            for _ in range(random.randint(4,8)):
+                x = cluster_x + random.randint(-10,10)
+                y = cluster_y + random.randint(-3,3)
+                if random.random() < 0.7:
+                    # Grass blades
+                    length = random.randint(3,6)
+                    angle = random.uniform(-0.3, 0.3)
+                    end_x = x + math.cos(angle) * length
+                    end_y = y - math.sin(angle) * length
+                    pygame.draw.line(surf, 
+                        (40, 80 + random.randint(0,20), 0, 220), 
+                        (x, y), (end_x, end_y), 1)
+                else:
+                    # Small flowers
+                    pygame.draw.circle(surf, 
+                        random.choice([(255,215,0,220), (255,0,0,220)]), 
+                        (x, y), 1)
+
+    # Water's edge details
+    for x in range(0, 80, 4):
+        if random.random() < 0.4:
+            # Small waves/ripples
+            pygame.draw.arc(surf, (50, 80, 150, 150), 
+                           (x-2, 22, 4, 2), math.pi, 2*math.pi, 1)
+            
+            # Rocky texture
+            if random.random() < 0.3:
+                pygame.draw.polygon(surf, (80, 70, 60, 220),
+                    [(x, 23), (x+1, 22), (x+2, 23), (x+1, 24)])
+
     return surf
 
 def create_background_image():
@@ -149,17 +245,202 @@ class Fuel(pygame.sprite.Sprite):
 
 class RiverBank:
     def __init__(self):
-        self.width = river_bank_img.get_width()
-        self.left_image = pygame.transform.flip(river_bank_img, True, False)
-        self.right_image = river_bank_img
-
+        self.colors = [
+            (20, 40, 0),      # Darkest base
+            (30, 55, 0),      # Dark base
+            (40, 70, 0),      # Mid dark
+            (50, 85, 0),      # Mid tone
+            (60, 100, 0),     # Light tone
+            (0, 50, 150)      # Water edge
+        ]
+        # Initialize vegetation tracking
+        self.vegetation_left = []
+        self.vegetation_right = []
+        self.next_plant_y = 0
+        
     def draw(self, surface, banks):
+        # Create layers surface for blending
+        layers = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        
+        # Generate base points
+        left_points = [(0, 0)]
+        right_points = [(WIDTH, 0)]
         for y, (left, right) in enumerate(banks):
-            surface.blit(self.left_image, (left - self.width, y * 10))
-            surface.blit(self.right_image, (right, y * 10))
+            y_coord = y * 10
+            left_points.append((left, y_coord))
+            right_points.append((right, y_coord))
+        left_points.append((0, HEIGHT))
+        right_points.append((WIDTH, HEIGHT))
+        
+        # Draw multiple gradient layers
+        for i, color in enumerate(self.colors[:-1]):  # Skip water edge color
+            # Offset each layer slightly for depth
+            offset = i * 4
+            
+            # Left bank with adjusted points
+            left_layer = [(p[0] + offset, p[1]) for p in left_points]
+            pygame.draw.polygon(layers, (*color, 255 - i * 20), left_layer)
+            
+            # Right bank with adjusted points
+            right_layer = [(p[0] - offset, p[1]) for p in right_points]
+            pygame.draw.polygon(layers, (*color, 255 - i * 20), right_layer)
+            
+            # Add highlight lines for texture
+            if i > 0:
+                for y, (left, right) in enumerate(banks):
+                    if random.random() < 0.3:
+                        y_coord = y * 10
+                        # Left bank highlights
+                        highlight_x = left + offset + random.randint(0, 8)
+                        pygame.draw.line(layers, 
+                            (*color, 100),
+                            (highlight_x, y_coord),
+                            (highlight_x + random.randint(5, 15), y_coord + random.randint(5, 10)),
+                            2)
+                        # Right bank highlights
+                        highlight_x = right - offset - random.randint(0, 8)
+                        pygame.draw.line(layers, 
+                            (*color, 100),
+                            (highlight_x, y_coord),
+                            (highlight_x - random.randint(5, 15), y_coord + random.randint(5, 10)),
+                            2)
+        
+        # Draw water edges with glow effect
+        water_edge = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        for y, (left, right) in enumerate(banks):
+            y_coord = y * 10
+            # Outer glow
+            for i in range(3):
+                alpha = 60 - i * 20
+                pygame.draw.line(water_edge, (*self.colors[-1], alpha),
+                               (left - i, y_coord), (left - i, y_coord + 10), 2)
+                pygame.draw.line(water_edge, (*self.colors[-1], alpha),
+                               (right + i, y_coord), (right + i, y_coord + 10), 2)
+            
+            # Main edge
+            pygame.draw.line(water_edge, (*self.colors[-1], 150),
+                           (left, y_coord), (left, y_coord + 10), 2)
+            pygame.draw.line(water_edge, (*self.colors[-1], 150),
+                           (right, y_coord), (right, y_coord + 10), 2)
+            
+            # Add water ripples
+            if random.random() < 0.2:
+                for x_offset in range(-2, 3, 2):
+                    pygame.draw.arc(water_edge, (*self.colors[-1], 100),
+                                  (left + x_offset, y_coord, 4, 4),
+                                  0, math.pi, 1)
+                    pygame.draw.arc(water_edge, (*self.colors[-1], 100),
+                                  (right + x_offset, y_coord, 4, 4),
+                                  0, math.pi, 1)
+        
+        # Update and draw vegetation
+        self.update_vegetation(banks)
+        self.draw_vegetation(layers)
+        
+        # Combine all layers
+        surface.blit(layers, (0, 0))
+        surface.blit(water_edge, (0, 0))
+    
+    def update_vegetation(self, banks):
+        # Remove vegetation that's moved off screen
+        self.vegetation_left = [(x, y+1) for x, y in self.vegetation_left if y < HEIGHT]
+        self.vegetation_right = [(x, y+1) for x, y in self.vegetation_right if y < HEIGHT]
+        
+        # Add new vegetation at the top when needed
+        while self.next_plant_y <= 0:
+            if len(banks) > 0:
+                left, right = banks[0]
+                # Add left bank vegetation
+                if random.random() < 0.3:
+                    x = left - random.randint(5, 15)
+                    self.vegetation_left.append((x, self.next_plant_y))
+                # Add right bank vegetation
+                if random.random() < 0.3:
+                    x = right + random.randint(5, 15)
+                    self.vegetation_right.append((x, self.next_plant_y))
+            self.next_plant_y += random.randint(20, 40)  # Space between plants
+        self.next_plant_y -= 1
+        
+    def draw_vegetation(self, surface):
+        for x, y in self.vegetation_left + self.vegetation_right:
+            if 0 <= y < HEIGHT:
+                self.draw_stylized_plant(surface, x, y)
+    
+    def draw_stylized_plant(self, surface, x, y):
+        # Base plant parameters
+        height = random.randint(8, 15)
+        width = random.randint(4, 8)
+        
+        # Draw layered plant shape for depth
+        for layer in range(3):
+            # Gradient colors for depth
+            color = (
+                40 + layer * 10,
+                80 + layer * 15,
+                0,
+                200 - layer * 30
+            )
+            
+            # Offset each layer slightly
+            offset = layer * 2
+            points = [
+                (x, y - offset),
+                (x - width, y + height - offset),
+                (x + width, y + height - offset)
+            ]
+            
+            # Draw base shape
+            pygame.draw.polygon(surface, color, points)
+            
+            # Add detail lines for texture
+            if random.random() < 0.5:
+                detail_y = y + height//2 - offset
+                pygame.draw.line(surface,
+                    (120, 150, 0, 100),
+                    (x - width//2, detail_y),
+                    (x + width//2, detail_y),
+                    1)
 
 def generate_river_banks():
-    return [[WIDTH//2 - 100, WIDTH//2 + 100] for _ in range(HEIGHT//10)]
+    """Generate smoother river banks"""
+    banks = []
+    # Start with middle positions
+    left_pos = WIDTH//2 - 100
+    right_pos = WIDTH//2 + 100
+    
+    # Generate initial control points
+    control_points = []
+    num_controls = 8
+    for i in range(num_controls):
+        left = left_pos + random.randint(-30, 30)
+        right = right_pos + random.randint(-30, 30)
+        control_points.append((left, right))
+    
+    # Generate smooth bank positions using control points
+    for i in range(HEIGHT//10):
+        # Find the two nearest control points
+        control_idx = (i * (num_controls-1)) // (HEIGHT//10)
+        next_idx = min(control_idx + 1, num_controls-1)
+        blend = ((i * (num_controls-1)) % (HEIGHT//10)) / (HEIGHT//10)
+        
+        # Interpolate between control points
+        left = int(control_points[control_idx][0] * (1-blend) + 
+                  control_points[next_idx][0] * blend)
+        right = int(control_points[control_idx][1] * (1-blend) + 
+                   control_points[next_idx][1] * blend)
+        
+        # Ensure minimum width and screen bounds
+        if right - left < 150:
+            center = (left + right) // 2
+            left = center - 75
+            right = center + 75
+            
+        left = max(50, min(left, WIDTH//2 - 50))
+        right = max(WIDTH//2 + 50, min(right, WIDTH - 50))
+        
+        banks.append([left, right])
+    
+    return banks
 
 def show_game_over_screen(screen, score, high_score):
     screen.fill(BLACK)
