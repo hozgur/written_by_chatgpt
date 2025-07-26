@@ -1,9 +1,13 @@
 import pygame
 import random
 import math
+import os
 
 # Initialize Pygame
 pygame.init()
+
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Game constants
 WIDTH, HEIGHT = 800, 600
@@ -11,7 +15,7 @@ PLAYER_SPEED = 5
 BULLET_SPEED = 7
 ENEMY_SPEED = 3
 FUEL_CONSUMPTION = 0.1
-HIGH_SCORE_FILE = "highscore.txt"
+HIGH_SCORE_FILE = os.path.join(script_dir, "highscore.txt")
 
 # Colors
 WHITE = (255, 255, 255)

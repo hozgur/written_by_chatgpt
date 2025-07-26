@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 # Initialize Pygame
 pygame.init()
@@ -9,8 +10,11 @@ width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("River Raid")
 
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Load sprites
-sprite_sheet = pygame.image.load("riverraid.png").convert_alpha()
+sprite_sheet = pygame.image.load(os.path.join(script_dir, "riverraid.png")).convert_alpha()
 
 # Function to get sprite from sheet
 def get_sprite(x, y, width, height):

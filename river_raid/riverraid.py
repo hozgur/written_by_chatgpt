@@ -1,10 +1,14 @@
 import pygame
 import random
+import os
 from pygame.locals import *
 
 # Initialize pygame
 pygame.init()
 pygame.mixer.init()  # Initialize sound
+
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Screen dimensions
 SCREEN_WIDTH = 400
@@ -46,9 +50,9 @@ class DummySound:
         pass
 
 try:
-    shoot_sound = pygame.mixer.Sound('shoot.wav')
-    explosion_sound = pygame.mixer.Sound('explosion.wav')
-    refuel_sound = pygame.mixer.Sound('refuel.wav')
+    shoot_sound = pygame.mixer.Sound(os.path.join(script_dir, 'shoot.wav'))
+    explosion_sound = pygame.mixer.Sound(os.path.join(script_dir, 'explosion.wav'))
+    refuel_sound = pygame.mixer.Sound(os.path.join(script_dir, 'refuel.wav'))
 except:
     # If sound files are missing, create silent dummy sounds
     shoot_sound = DummySound()
@@ -56,7 +60,7 @@ except:
     refuel_sound = DummySound()
 
 # Load the sprite sheet
-sprite_sheet = pygame.image.load('riverraid.png').convert_alpha()
+sprite_sheet = pygame.image.load(os.path.join(script_dir, 'riverraid.png')).convert_alpha()
 
 # Extract the individual sprites using the coordinates
 player_image = pygame.transform.scale(sprite_sheet.subsurface((60, 10, 28, 28)), (40, 40))

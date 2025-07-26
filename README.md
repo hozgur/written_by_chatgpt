@@ -1,87 +1,76 @@
-# River Raid Game
+# Python Game & Simulation Projects
 
-Bu proje, Pygame kullanarak basit bir River Raid oyununu simüle eder. Oyuncu, nehirde ilerlerken düşmanlardan ve engellerden kaçınmalıdır.
+This repository contains various Python-based games and simulations, organized by project type. All projects are created using Pygame and demonstrate different programming concepts from game development to physics simulations.
 
-## Kurulum
+## Project Structure
 
-Gereksinimleri yüklemek için:
+### 🎮 [River Raid Game](./river_raid/)
+Classic arcade-style river navigation game
+- Multiple game versions and iterations
+- Sprite-based graphics and sound effects
+- High score tracking
 
-```bash
-pip install -r requirements.txt
-```
+### 🎲 [Blackjack Games](./blackjack/)  
+Complete blackjack implementation with multiple interfaces
+- GUI version with visual cards
+- Interactive console version
+- Realistic simulation with statistics
+- Strategy testing tools
 
-## Örnekler
+### 🔬 [Physics Simulations](./simulations/)
+Collection of physics and visual simulations
+- Water wave dynamics
+- Particle systems with gravity
+- Fireworks displays
+- Interactive mouse controls
 
-### River Raid
+### 🐜 [Ant Colony Simulation](./ant_colony/)
+Advanced swarm intelligence demonstration
+- Pheromone-based pathfinding
+- Emergent behavior patterns
+- Colony dynamics visualization
 
-Nehirde ilerlerken düşmanlardan ve engellerden kaçınmanız gereken bir oyun.
+### 🔊 [Audio Tools](./audio_tools/)
+Sound generation and audio utilities
+- Game sound effects generator
+- WAV file creation tools
+- Audio processing utilities
 
-Çalıştırmak için:
+## Installation
 
-```bash
-python riverraid.py
-```
-
-### 2D Su Dalga Simülasyonu
-
-Fare tıklamalarıyla su yüzeyinde dalgalar oluşturabileceğiniz bir simülasyon.
-
-Çalıştırmak için:
-
-```bash
-python water_1.py
-```
-
-### Parçacık Simülasyonu
-
-Yerçekimi ve çarpışma etkileriyle parçacıkların hareketini gözlemleyin.
-
-Çalıştırmak için:
-
-```bash
-python marble_1.py
-```
-
-### Havai Fişek Simülasyonu
-
-Rastgele havai fişek patlamalarını izleyin.
-
-Çalıştırmak için:
-
-```bash
-python fireworks.py
-```
-
-### Optimizasyonlu Parçacık Simülasyonu
-
-Fare etkileşimi ile parçacıkların hareketini gözlemleyin.
-
-Çalıştırmak için:
-
-```bash
-python particles.py
-```
-
-Gereksinimleri yüklemek için:
+Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Kullanım
+## Quick Start
 
-Oyunu başlatmak için:
+Each project folder contains its own README with specific instructions. You can run projects from the root directory or from within their folders:
 
 ```bash
+# Run from root directory (recommended)
+python river_raid/riverraid.py
+python simulations/water_1.py
+python ant_colony/ants.py
+
+# Or navigate to project folder first
+cd river_raid
 python riverraid.py
 ```
 
-## Oyun Kontrolleri
+See individual project READMEs for specific instructions and available versions.
 
-- **Sol Ok Tuşu**: Sola hareket
-- **Sağ Ok Tuşu**: Sağa hareket
-- **Boşluk Tuşu**: Ateş et
+## Requirements
 
-## Katkıda Bulunanlar
+- Python 3.7+
+- Pygame
+- NumPy (for physics simulations)
 
-Bu proje, ChatGPT tarafından oluşturulmuştur.
+## Contributing
+
+These projects were created by ChatGPT as demonstrations of various programming concepts and game development techniques.
+
+## License
+
+Open source - feel free to use and modify for learning purposes.
